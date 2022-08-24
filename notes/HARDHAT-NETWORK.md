@@ -1,17 +1,43 @@
-# COMPONENTS
+# Hardhat Network
 
--   Hardhat comes with following components
-    -   Hardhat Network
-    -   Hardhat Network Helpers
-    -   Hardhat Runner
-    -   Hardhat Chai Matchers
-    -   Hardhat VSCode
+## Network properties in Config.ts
 
-I will go through key components and functionality here
+-   You can set following propeties in network in hardhat.config.ts
 
----
+```
+    const config: HardhatUserConfig = {
+        networks: {
+            hardhat: {
+                chainId: 31337,
+                from:,
+                gas: auto, // if a number is used, it becomes a gas limit for txn
+                gasMultiplier: , // number used to multiply results of gas to give some slack
+                accounts: [], //an array of initial accounts, each having private key and balance
+                blockGasLimit: auto, block gas limit to use in hardhat network's blockchain. default is 30,000,000
+                forking: {
+                    url:, // network provider API endpoint
+                    blockNumber:, // blocknumber from which to fork
+                    enabled:, //default value is true if url is set, or false
+                }, // object that represents forking configuration
 
-## Hardhat Network
+                chains: {
+                    1: {
+                        hardforkHistory:,
+
+                    },
+                    31337: {
+
+                    }
+
+                },
+
+                minGasPrice:
+                initialBaseFeePerGas: , // `baseFeePerGas` of first blovk
+            }
+        }
+    }
+
+```
 
 -   Hardhat comes with a built-in hardhat network - local ethereum network node designed for development
 -   Allows us to deploy code, run tests and debug code, all within confines of local machine
@@ -34,7 +60,9 @@ I will go through key components and functionality here
 -   Connect your wallet or application to `http://127.0.0.1:8545`. Just use `--network localhost` for connecting with this server
 -   Stack trace - incase of errors, we get a stack of both JS and solidity errors - starts with JS and stacks up and goes all the way to Solidity stack trace
 
-**Console log**
+---
+
+## Console log
 
 -   `console.log` - Hardhat network supports logging of contract variables and messages within solidity
 -   simply import `hardhat/console.sol` in your solidity contract and start logging variables. For eg
@@ -61,7 +89,15 @@ I will go through key components and functionality here
 
 -   Console consumes some gas in live networks - be careful when deploying on mainnet - should not have excessive logs (if any, not recommended)
 
-**Mainnet forking**
+-   You can call console.log for upto 4 parameters in any order for following tupes
+    -   `uint`
+    -   `string`
+    -   `bool`
+    -   `address`
+
+---
+
+## Mainnet forking
 
 -   One of the most powerful concepts of hardhat
 -   copies state of mainnet blockchain onto local environment - all contracts deployed on mainnet will be accessible to us & we can test their behavior using local eth
@@ -114,35 +150,138 @@ You can also specify it as a task (not recommended, very verbose)
     $yarn hardhat node --fork https://eth-mainnet.alchemyapi.io/v2/<key> --fork-block-number 14390000
 ```
 
-We can add custom
+---
 
-**Mining mode**
+## Mining mode
 
 -   Hardhat network can be configured to immediately mine blocks as soon as a new txn comes or block in intervals
 
 -   interval mining incorporates as many txns from the last block timestamp in current block
 
+-   We can change mining mode in runtime as follows
+
+```
+    await network.provider.send("evm_setAutomine", [false])
+
+    await network.provider.send("evm_setIntervalMining, [5000]) // pass time in seconds
+```
+
+-   If automining is set to false, all txns by default go to mempool. And order of picking txns is in descending order of gas fees (just like in real world)
+
+-   When automine is false, pending txns can be queried with `eth_getBlockByNumber` RPC method - with `pending` as block number argument
+
+```
+    const pendingTxns = await network.provider.send("eth_getBlockByNumber", ["pending", false])
+```
+
+Above code returns all pending txns that will be sent to next block
+
+-   When automine is false, we can manually mine new blocks using `evm_mine` RPC method
+
+-   A pending txn can be removed using `hardhat_dropTransaction` RPC method
+
+```
+    const txnHash = "0xasas233....."
+    await helpers.dropTransaction(txHash)
+
+```
+
+-   A pending txn can be replaced by adding a new txn with same nonce but with 10+% increase in fee paid to miner
+
 -   We can use on of these modes, or neither. by default, automining is enabled. If none is selected, no new blocks are mined - mining can be done on demand by calling evm_mine RPC method - when this is called, it tries to incorporate as many pending txns as possible
 
-**Logging**
+---
+
+## Logging
 
 -   Hardhat network supports extensive logging that helps debugging contracts
 
 -   We can get debug traces of already mined transactions using `debug_traceTransaction` RPC method. Returned object has a detailed description of txn execution, including list of steps describing each executed opcode and state of EVM at that point
 
+We can generate trace for any address by doing following
+
+```
+    const trace = await hre.network.provider.send("debug_traceTransaction", ["0x13334assd....])
+```
+
 -   if we use mainnet forking with an archive node, we can get traces of transactions from remote network using `debug_traceTransaction` - even if local node does not support this
 
--   ***
+---
 
-## Hardhat Network Helpers
+## Impersonating accounts
 
-### Overview
+-   Hardhat network allows us to impersonate accounts
 
--   Provides a convenient JS interface to JSON-RPC functionality of Hardhat Network
--   `Hardhat Network` exposes its functionality through JSON-RPC-API
--   However interfacing is noisy, verbose and needs extensive conversion of input/output data
--   Network helpers package provides quick and easy interfaction with Hardhat Network
+-   Lets you send txns from that account even if you don't have private key
 
-### Mine a block
+-   use `ethers.getImpersonatedSigner()` method added to the `ethers` object by `hardhat-ethers` plugin
 
-`mine([blocks], [options])` - mines a specific number of blocks. defaults to 1.
+```
+    // if we have address of impersonator, we can do this
+    const impersonatedSigner = await ethers.getImpersonatedSigner(<address>)
+    await impersonatedSigner.sendTransaction(..)
+```
+
+Alternatively, we cna use hardhat-helper to impersonate account and use the normal getSigner() method in ethers
+
+```
+    import helpers from "@nomicfoundation/hardhat-network-helpers";
+    const address = "0x1234567890123456789012345678901234567890";
+
+    await helpers.getImpersonatedAccount(address);
+
+    const impersonatedSigner = await ethers.getSigner(address);
+```
+
+---
+
+## Resetting fork
+
+We can always reset the fork to a given block number again by running
+
+```
+    await network.provider.request({
+        method: "hardhat_reset",
+        params: [
+            {
+                forking: {
+                    jsonRpcUrl: ""
+                    blockNumber: 143900000,
+                }
+            }
+        ]
+    })
+```
+
+Similarly, you can disable forking by passing empty params
+
+```
+    await network.provider.request({
+        method: "hardhat_reset",
+        params: []
+    })
+
+```
+
+---
+
+## Initial State
+
+-   On `yarn hardhat node`, a new chain is initialized with genesis block
+-   20 accounts with 10000 ETH each are generated
+
+---
+
+## Special functions
+
+-   Special functions supported in hardhat.network are
+
+    -   `evm_increaseTime`
+    -   `evm_mine`
+    -   `evm_revert`
+    -   `evm_setAutomine`
+    -   `evm_setBlockGasLimit`
+    -   `hardhat_impersonateAccount`
+    -   `hardhat_mine`
+
+    All these functions are very verbose - to make intefacing with these easy, we have the hardhat-network-helper component.

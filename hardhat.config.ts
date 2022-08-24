@@ -14,6 +14,11 @@ const config: HardhatUserConfig = {
         },
         hardhat: {
             chainId: 31337,
+            forking: {
+                url: "https://eth-mainnet.g.alchemy.com/v2/XsyaHoDsW3ODgC5mH6pw_Kmdnq6BIDr0",
+                blockNumber: 15000000,
+                enabled: true,
+            },
         },
         rinkeby: {
             chainId: 4,
@@ -23,6 +28,14 @@ const config: HardhatUserConfig = {
             chainId: 1,
             url: "",
         },
+        // mainnetFork: {
+        //     forking: {
+        //         url: "https://eth-mainnet.g.alchemy.com/v2/XsyaHoDsW3ODgC5mH6pw_Kmdnq6BIDr0",
+        //         blockNumber: 15000000,
+        //         enabled: true,
+        //     },
+        //     chainId: 31337,
+        // },
     },
 }
 
