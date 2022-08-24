@@ -1,6 +1,8 @@
-import { HardhatUserConfig } from "hardhat/config"
+import { extendEnvironment, HardhatUserConfig } from "hardhat/config"
 import "@nomicfoundation/hardhat-toolbox"
 import "@nomiclabs/hardhat-ethers"
+import "hardhat-deploy"
+import { task } from "hardhat/config"
 
 const config: HardhatUserConfig = {
     solidity: "0.8.9",
@@ -23,5 +25,16 @@ const config: HardhatUserConfig = {
         },
     },
 }
+
+/**
+ * @dev here is how we create a new task in hardhat
+ */
+task("print-account", "Prints list of accounts", async (taskArgs, hre) => {
+    const accounts = await hre.ethers.getSigners()
+
+    accounts.map((account) => {
+        console.log(account.address)
+    })
+})
 
 export default config
