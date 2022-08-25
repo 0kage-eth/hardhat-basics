@@ -48,11 +48,15 @@ Refer to examples in [hardhat-helper-examples.ts](../scripts/hardhat-network-hel
 -   increase() function is a very good tool that helps in increasing time programatically
 -   takes time in seconds
 
+Refer to `increaseTime` example in [hardhat-helper-examples.ts](../scripts/hardhat-network-helpers-testing.ts)
+
 `increaseTo(futuretimestamp)`
 
 -   This function shifts block to a timestamp that matches with one we pass
 -   Previous function we increased time by a specific amount - in this we move time to specific timestamp
 -   timestamp must be greater than current timestamp
+
+Refer to `increaseTimeTo` example in [hardhat-helper-examples.ts](../scripts/hardhat-network-helpers-testing.ts)
 
 `setNextBlockTimestamp(timestamp)`
 
@@ -60,7 +64,7 @@ Refer to examples in [hardhat-helper-examples.ts](../scripts/hardhat-network-hel
 -   Note that in this case, we don't mine a new block
 -   timestamp must be greater than current time stamp
 
-Refer to examples in [hardhat-helper-examples.ts](../scripts/hardhat-network-helpers-testing.ts)
+Refer to `setNextBlockTimestamp` example in [hardhat-helper-examples.ts](../scripts/hardhat-network-helpers-testing.ts)
 
 ## Snapshot
 
@@ -68,3 +72,18 @@ Refer to examples in [hardhat-helper-examples.ts](../scripts/hardhat-network-hel
 
 -   takes snapshot of blockchain state as on current block
 -   returns an object with a `restore` method that can be used to reset network to state in snapshot
+
+Refer to `useSnapshot` example in [hardhat-helper-examples.ts](../scripts/hardhat-network-helpers-testing.ts)
+
+## Fixtures
+
+`loadFixture(<fixture>)`
+
+-   Fixtures is useful in tests for setting up desired state of network
+-   Executes given function and takes snapshot of blockchain (notice how fixtures builds on top of snapshot)
+-   Upon subsequent calls to loadFixture() with same function, rather than executing function again, blockchain will be restored to that snapshot
+-   _Don't use loadfixture with anonymous function - can't take snapshot in this case & function executes everytime_
+-   Correct usage `loadFixture(deployTokens)`, Incorrect usage: `loadFixture(async()=> {...})`
+-   fixture is function that will be executed once & whose snapshot will be captures - this should always be a named function
+
+Refer to `useFixture` example in [hardhat-helper-examples.ts](../scripts/hardhat-network-helpers-testing.ts)

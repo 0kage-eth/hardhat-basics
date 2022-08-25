@@ -1,3 +1,4 @@
+import { TransactionRequest } from "@ethersproject/providers"
 import {
     mine,
     mineUpTo,
@@ -6,7 +7,10 @@ import {
     setNonce,
     impersonateAccount,
     time,
+    takeSnapshot,
+    loadFixture,
 } from "@nomicfoundation/hardhat-network-helpers"
+import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers"
 import hre, { ethers } from "hardhat"
 import { parse } from "path"
 
@@ -207,38 +211,139 @@ const increaseTime = async (numSeconds: number) => {
     console.log(`Timestamp of block number ${futureBlockNumber} is ${futureBlock.timestamp}`)
 }
 
-/** mines a new block whose timestamp is timestamp we send */
-const increaseTimeTo = async (timeStamp: number) => {}
+/**
+ * @dev mines a new block whose timestamp is timestamp we send
+ * */
 
-const setNextBlockTimestamp = async (timestamp: number) => {}
+const increaseTimeTo = async () => {
+    const ethers = hre.ethers
+    let block = await ethers.provider.getBlock("latest")
+    console.log(`current block: ${block.number}, timestamp: ${block.timestamp}`)
 
-const takeSnapshot = async () => {}
+    // increase time to our input timestamp
+    // adds a block with current timestamp
+    await time.increaseTo(block.timestamp + 1000)
+    console.log(` increasing time to ${block.timestamp + 1000} ...`)
+    block = await ethers.provider.getBlock("latest")
+    console.log(`current block: ${block.number}, timestamp: ${block.timestamp}`)
+}
 
-const loadFixture = async () => {}
+/**
+ * @dev setNExtBlockTimestamp sets timestamp of next block
+ * @dev but doesn't mine one - we need to mine manually or add a txn (so that network automines) to see the effecyt
+ * @dev in curren example, I am manually mining the next block
+ */
+const nextBlockTimestamp = async () => {
+    let block = await hre.ethers.provider.getBlock("latest")
+
+    console.log(`current block ${block.number},timestamp ${block.timestamp}`)
+    console.log(`calling setNextBlockTimestamp by adding 1000 to current timestamp`)
+
+    await time.setNextBlockTimestamp(block.timestamp + 1000)
+
+    await mine(1)
+    block = await hre.ethers.provider.getBlock("latest")
+    console.log(`current block ${block.number},timestamp ${block.timestamp}`)
+}
+
+/**
+ * @dev takes snapshot and provides a 'restore' method to get back to original state
+ * @dev I will transfer 1 eth between accounts, set time stamp of next block & mine a new block
+ * @dev then i will try to restore old snapshot
+ */
+const useSnapshot = async () => {
+    const accounts = await hre.ethers.getSigners()
+
+    // capturing a snapshot of chain
+    let snapshot = await takeSnapshot()
+
+    let sender = accounts[0]
+    let receiver = accounts[1]
+    let txn: TransactionRequest = { to: receiver.address, value: hre.ethers.utils.parseEther("1") }
+    let tx = await sender.sendTransaction(txn)
+
+    // adds 1000 seconds to next mined block
+    await increaseTimeTo()
+
+    let block = await hre.ethers.provider.getBlock("latest")
+
+    let senderBalanceEth = hre.ethers.utils.formatEther(await sender.getBalance())
+    let receiverBalanceEth = hre.ethers.utils.formatEther(await receiver.getBalance())
+
+    console.log(
+        `current block is ${block.number}, timestamp is ${block.timestamp}, sender balance is ${senderBalanceEth} eth, receiver balance is ${receiverBalanceEth} eth`
+    )
+
+    // restoring snapshot to a state before all these txns
+    await snapshot.restore()
+
+    console.log("--------------------------")
+    console.log("snapshot restored... checking back on state...")
+    block = await hre.ethers.provider.getBlock("latest")
+
+    senderBalanceEth = hre.ethers.utils.formatEther(await sender.getBalance())
+    receiverBalanceEth = hre.ethers.utils.formatEther(await receiver.getBalance())
+
+    console.log(
+        `current block is ${block.number}, timestamp is ${block.timestamp}, sender balance is ${senderBalanceEth} eth, receiver balance is ${receiverBalanceEth} eth`
+    )
+}
+
+/**
+ * @dev transactionsFixture is what gets called inside loadFixture once & state of chain is stored
+ * @dev this is very helpful in testing when we don't have to generate the start state again & again
+ * @dev fixture functions usually are used for deploying contracts - so the chain sent to testing already has these contracts live
+ * @dev in current fixture, I transfer 1 ether from sender to receiver 1/2/3. I mine 3 blocks afterwards for finality
+ */
+const transactionsFixture = async () => {
+    const [sender, receiver1, receiver2, receiver3, ...others] = await hre.ethers.getSigners()
+
+    const sendValue = hre.ethers.utils.parseEther("1")
+    const tx1: TransactionRequest = { to: receiver1.address, value: sendValue }
+    const tx2: TransactionRequest = { to: receiver2.address, value: sendValue }
+    const tx3: TransactionRequest = { to: receiver3.address, value: sendValue }
+
+    //sendt 1 ether from sender to receiver1/2/3
+    const txn1 = await sender.sendTransaction(tx1)
+    const txn2 = await sender.sendTransaction(tx2)
+    const txn3 = await sender.sendTransaction(tx3)
+
+    //mine 3 blocks
+    await mine(3)
+
+    return { sender, receiver1, receiver2, receiver3 }
+}
+const useFixture = async () => {
+    const { sender, receiver1, receiver2, receiver3 } = await loadFixture(transactionsFixture)
+    const senderBalance = await sender.getBalance()
+    console.log(`balance of sender wallet is ${ethers.utils.formatEther(senderBalance)} eth`)
+}
 
 const dropTransaction = async (txHash: string) => {}
 
 const main = async () => {
     // Uncomment to run this
     // await mining()
-
     // Uncomment to run this
     // await miningUpto(100)
-
     // Uncomment to run this
     // await manipulateBalance("5")
-
     // Uncomment to run this
     //  await assignCode()
-
     // uncomment to run this
     // await assignNonce()
-
     // uncomment to run this
     // await mimicAccount()
-
     // uncomment to run this
-    await increaseTime(500)
+    //await increaseTime(500)
+    // uncomment to run this
+    //await increaseTimeTo()
+    //uncomment to run this
+    //await nextBlockTimestamp()
+    //uncomment to run this
+    //await useSnapshot()
+    //uncomment to run this
+    await useFixture()
 }
 
 /** Run mining example */
