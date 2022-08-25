@@ -38,6 +38,14 @@ const config: HardhatUserConfig = {
         //     chainId: 31337,
         // },
     },
+    namedAccounts: {
+        deployer: {
+            default: 0,
+        },
+        receiver: {
+            default: 1,
+        },
+    },
 }
 
 /**

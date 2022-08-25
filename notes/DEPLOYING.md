@@ -6,8 +6,24 @@
 
                   yarn add --dev hardhat-deploy
 
--   Add `import @hardhat-dep
+-   Add `import @hardhat-deploy
 -   Creates a `deploy` task - task runs all files in deploy folder
+-   deployment can have tags - suppose a deployment script `deployCounter`
+
+```
+  deployCounter.tags = ["main", "counter"]
+```
+
+-   Assigning tags as above helps in loading fixtures - this is discussed in hardhat-chai-matchers.
+-   We can selectively deploy contracts of a specific tag by writing a script in terminal
+
+```
+  $yarn hardhat deploy --tags main, counter --network rinkeby
+```
+
+-   In above example, all deployments with tags either `main` or `counter` get executed on rinkeby network
+
+Refer [deployCounter.ts](../deploy/deployCounter.ts) to check an example of a deployed contract
 
 ---
 

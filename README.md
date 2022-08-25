@@ -12,39 +12,33 @@ I discuss
     - HRE
     - Compilation artificats
     - Plugins
-    - Other hardhat components
+    - Hardhat components - Chai Matchers, Hardhat helper
+
+Project has examples and sample code that is referenced to corresponding notes.
 
 ---
 
+Go through [INSTALLATION](./notes/INSTALLATION.md) for notes on installing hardhat
 
+Go through [COMPILING](./notes/COMPILING.md) for notes on compiling solidity contracts
+
+Go through [DEPLOYING](./notes/DEPLOYING.md) for notes on deploying and verifying compiled contracts
+
+Go through [TESTING](./notes/TESTING.md) for notes on testing contracts
+
+Go through [HARDHAT-NETWORK](./notes/HARDHAT-NETWORK.md) for notes on harhdat network config, mainnet forking features
+
+Go through [PLUGINS](./notes/PLUGINS.md) for notes on plugins that can extend hardhat functionality
+
+Go through [SCRIPTS](./notes/SCRIPTS.md) for notes on writing scripts and tasks in hardhat
+
+Go through [HRE](./notes/SCRIPTS.md) for notes on Hardhat runtime environment
+
+Go through [HARDHAT-NETWORK-HELPERS](./notes/HARDHAT-NETWORK-HELPERS.md) for notes on hardhat-network-helper component
+
+Go through [HARDHAT-CHAI-MATCHERS](./notes//HARDHAT-CHAI-MATCHERS.md) for notes on hardhat-chai-matchers component
 
 
 
 
 ***
-
-
-
-
-
-
-
-
-## PLUGINS
-
-### Hardhat-network-helper
-
-Hardhat network helper plugin contains a bunch of functions that makes testing easier. Some of the important ones are
-
-
-- `time` - We can manipulate time in testing and change timestamp of blocks by going into future by using this 
-
-
-- `fixtures` - fixtures help in preventing repeated contract deployments before running tests
-
-    - fixture is a function that setups chain to a desired state
-    - `loadFixture` - first time this is called, fixture is executed
-    - second time, instead of calling the fixture again, `loadFixture` sets up the state at the same point where it was called the first time
-    - basically it does an undo to all state changes after fixture was set first time - much faster 
-
-
